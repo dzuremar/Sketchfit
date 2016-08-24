@@ -25,14 +25,6 @@
             android:layout_gravity="center"
             android:padding="30dp" />
 
-        <ImageButton
-            android:id="@+id/imgResolutions"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:background="@android:drawable/ic_menu_gallery"
-            android:padding="30dp" />
-
         <TextView
             android:id="@+id/textTreshold"
             android:layout_width="wrap_content"

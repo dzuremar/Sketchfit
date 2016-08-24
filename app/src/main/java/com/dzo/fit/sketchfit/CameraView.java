@@ -2,7 +2,6 @@ package com.dzo.fit.sketchfit;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.os.Handler;
@@ -16,6 +15,7 @@ import android.view.SurfaceHolder;
 import android.widget.ImageView;
 import android.widget.TextView;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by MartinDzurenko on 25.02.2016.
@@ -53,12 +53,19 @@ public class CameraView implements SurfaceHolder.Callback, Camera.PreviewCallbac
 
     Handler mHandler = new Handler(Looper.getMainLooper());
 
-    public CameraView(int previewWidth, int previewHeight, int outWidth, int outHeight, ImageView CameraPreview, boolean processingEnabled, TextView textFps, Context context)
+    public CameraView(int idealPreviewWidth, int idealPreviewHeight, ImageView CameraPreview, boolean processingEnabled, TextView textFps, Context context)
     {
-        this.previewWidth = previewWidth;
-        this.previewHeight = previewHeight;
-        this.outWidth = outWidth;
-        this.outHeight = outHeight;
+        Camera.Size suitableSize = FindSuitableCameraSize(idealPreviewWidth, idealPreviewHeight);
+        if (suitableSize != null) {
+            previewWidth = suitableSize.width;
+            previewHeight = suitableSize.height;
+        } else {
+            outWidth = idealPreviewWidth;
+            outHeight = idealPreviewHeight;
+        }
+        previewWidth = 2 * outWidth;
+        previewHeight = 2 * outHeight;
+
         this.MyCameraPreview = CameraPreview;
         this.processingEnabled = processingEnabled;
         this.textFps = textFps;
@@ -95,6 +102,31 @@ public class CameraView implements SurfaceHolder.Callback, Camera.PreviewCallbac
         scriptIP.set_imageHeight(previewHeight);
         scriptIP.set_sImageWidth(outWidth);
         scriptIP.set_sImageHeight(outHeight);
+    }
+
+    private Camera.Size FindSuitableCameraSize(int idealWidth, int idealHeight) {
+        Camera.Size bestSize = null;
+        int bestDist = Integer.MAX_VALUE;
+        Camera staticCamera = Camera.open();
+        if (staticCamera == null || staticCamera.getParameters() != null || staticCamera.getParameters().getSupportedPictureSizes() != null)
+            return null;
+        List<Camera.Size> supportedSizes = staticCamera.getParameters().getSupportedPictureSizes();
+        for (Camera.Size camSize : supportedSizes) {
+            int dist = Math.abs(camSize.width - idealWidth) + Math.abs(camSize.height - idealHeight);
+            if (dist < bestDist && Contains2xSize(supportedSizes, camSize)) {
+                bestSize = camSize;
+                bestDist = dist;
+            }
+        }
+        return bestSize;
+    }
+
+    private boolean Contains2xSize(List<Camera.Size> allSizes, Camera.Size smallerSize) {
+        for (Camera.Size camSize : allSizes) {
+            if (camSize.width == 2*smallerSize.width && camSize.height == 2*smallerSize.height)
+                return true;
+        }
+        return false;
     }
 
     @Override
